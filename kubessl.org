@@ -7,7 +7,7 @@
 - openssl x509 -req -in server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out server.crt -days 5000
 -访问的时候必须访问这个域名才有效要不然会报错
 - [root@node-10-10-112-61 ssl]# more tokens.csv 
-- abcdTOKEN1234,wangzhezhe,wangzhezhe
+- abcdTOKEN1234,xiaoy110,xiaoy110
 ** apiserver启动
 *** 启动服务
 kube-apiserver --insecure_port=8080  --secure-port=8081 --etcd_servers=http://10.10.112.61:2379 --logtostderr=true --service-cluster-ip-range=10.254.0.0/16 --client-ca-file=/root/crt/ca.crt --tls-cert-file=/root/crt/server.crt --tls-private-key-file=/root/crt/server.key --token_auth_file=/root/crt/tokens.csv
