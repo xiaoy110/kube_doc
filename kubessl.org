@@ -5,9 +5,9 @@
 - openssl genrsa -out server.key 2048
 - openssl req -new -key server.key -subj "/CN=node-10-10-112-61.iprun.com" -out server.csr
 - openssl x509 -req -in server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out server.crt -days 5000
-访问的时候必须访问这个域名才有效要要不然会报错
-[root@node-10-10-112-61 ssl]# more tokens.csv 
-abcdTOKEN1234,wangzhezhe,wangzhezhe
+-访问的时候必须访问这个域名才有效要要不然会报错
+- [root@node-10-10-112-61 ssl]# more tokens.csv 
+- abcdTOKEN1234,wangzhezhe,wangzhezhe
 ** apiserver启动
 *** 启动服务
 kube-apiserver --insecure_port=8080  --secure-port=8081 --etcd_servers=http://10.10.112.61:2379 --logtostderr=true --service-cluster-ip-range=10.254.0.0/16 --client-ca-file=/root/crt/ca.crt --tls-cert-file=/root/crt/server.crt --tls-private-key-file=/root/crt/server.key --token_auth_file=/root/crt/tokens.csv
@@ -26,37 +26,37 @@ curl --cacert ca.crt -H "Authorization: Bearer abcdTOKEN1234" https://node-10-10
 - KUBE_TOKEN_AUTH_FILE="--token_auth_file=/etc/kubernetes/ssl/tokens.csv
 *** 修改脚本配置文件
  vim /usr/lib/systemd/system/kube-apiserver.service
-[Unit]
-Description=Kubernetes API Server
-Documentation=https://github.com/GoogleCloudPlatform/kubernetes
-After=network.target
-After=etcd.service
+- [Unit]
+- Description=Kubernetes API Server
+- Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+- After=network.target
+- After=etcd.service
 
-[Service]
-EnvironmentFile=-/etc/kubernetes/config
-EnvironmentFile=-/etc/kubernetes/apiserver
-User=kube
-ExecStart=/usr/bin/kube-apiserver \
-            $KUBE_LOGTOSTDERR \
-            $KUBE_LOG_LEVEL \
-            $KUBE_ETCD_SERVERS \
-            $KUBE_API_ADDRESS \
-            $KUBE_API_PORT \
-            $KUBELET_PORT \
-            $KUBE_ALLOW_PRIV \
-            $KUBE_SERVICE_ADDRESSES \
-            $KUBE_ADMISSION_CONTROL \
-            $KUBE_API_ARGS \
-            $KUBE_SECURE_PORT \
-            $KUBE_CLIENT_CA_FILE \
-            $KUBE_CERT_FILE \
-            $KUBE_TLS_PRIVATE_KEY \
-            $KUBE_TOKEN_AUTH_FILE
+- [Service]
+- EnvironmentFile=-/etc/kubernetes/config
+- EnvironmentFile=-/etc/kubernetes/apiserver
+- User=kube
+- ExecStart=/usr/bin/kube-apiserver \
+            - $KUBE_LOGTOSTDERR \
+            - $KUBE_LOG_LEVEL \
+            - $KUBE_ETCD_SERVERS \
+            - $KUBE_API_ADDRESS \
+            - $KUBE_API_PORT \
+            - $KUBELET_PORT \
+            - $KUBE_ALLOW_PRIV \
+            - $KUBE_SERVICE_ADDRESSES \
+            - $KUBE_ADMISSION_CONTROL \
+            - $KUBE_API_ARGS \
+            - $KUBE_SECURE_PORT \
+            - $KUBE_CLIENT_CA_FILE \
+            - $KUBE_CERT_FILE \
+            - $KUBE_TLS_PRIVATE_KEY \
+            - $KUBE_TOKEN_AUTH_FILE
 
-Restart=on-failure
-Type=notify
-LimitNOFILE=65536
+- Restart=on-failure
+- Type=notify
+- LimitNOFILE=65536
 
-[Install]
-WantedBy=multi-user.target
+- [Install]
+- WantedBy=multi-user.target
 
