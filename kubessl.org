@@ -5,7 +5,7 @@
 - openssl genrsa -out server.key 2048
 - openssl req -new -key server.key -subj "/CN=node-10-10-112-61.iprun.com" -out server.csr
 - openssl x509 -req -in server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out server.crt -days 5000
--访问的时候必须访问这个域名才有效要要不然会报错
+-访问的时候必须访问这个域名才有效要不然会报错
 - [root@node-10-10-112-61 ssl]# more tokens.csv 
 - abcdTOKEN1234,wangzhezhe,wangzhezhe
 ** apiserver启动
