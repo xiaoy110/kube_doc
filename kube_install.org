@@ -1,0 +1,164 @@
+* 安装kubernetes
+** 软件版本
+#+BEGIN_EXAMPLE
+kubernetes-client-1.2.0-0.12.gita4463d9.el7.x86_64
+kubernetes-node-1.2.0-0.12.gita4463d9.el7.x86_64
+docker-common-1.10.3-44.el7.centos.x86_64
+docker-selinux-1.10.3-44.el7.centos.x86_64
+docker-1.10.3-44.el7.centos.x86_64
+docker-forward-journald-1.10.3-44.el7.centos.x86_64
+flannel-0.5.3-9.el7.x86_64
+etcd-2.2.5-2.el7.0.1.x86_64
+#+END_EXAMPLE
+** 操作系统详情
+CentOS Linux release 7.2.1511 (Core)
+| 角色             | 主机名 |            ip |
+|------------------+--------+---------------|
+| master+etcd      | master |  10.10.112.61 |
+| minion1+flanneld | node1  | 10.10.112.217 |
+| minion2+flanneld | node2  | 10.10.112.139 |
+
+
+** 关闭每台主机上的iptables 和firewalled
+- 输入下面的命令关闭firealld
+#+BEGIN_SRC shell
+  systemctl stop firewalld  # 停止firewall
+  systemctl disable firealld # 禁止开机启动
+#+END_SRC
+- 安装iptables，不起动也行
+#+BEGIN_SRC shell
+yum install -y iptables-services
+#+END_SRC
+
+** 安装kubernetes master
+- 安装包
+#+BEGIN_SRC shell
+yum -y install kubernetes device-mapper-event-libs device-mapper-libs net-tools vim unzip lrzsz etcd flannel
+#+END_SRC
+- Etcd配置
+#+BEGIN_SRC shell
+# vim /etc/etcd/etcd.conf
+----------------------------------------------------------------------------
+# [member]
+ETCD_NAME=default
+ETCD_DATA_DIR="/var/lib/etcd/default.etcd"
+ETCD_LISTEN_CLIENT_URLS="http://0.0.0.0:2379"
+#[cluster]
+ETCD_ADVERTISE_CLIENT_URLS="http://localhost:2379"
+#+END_SRC
+- 在etcd中定义flannel network的配置，这些配置会被flannel service下发到minions:
+#+BEGIN_SRC shell
+# etcdctl mk /atomic.io/network/config '{"Network":"172.17.0.0/16"}'
+#+END_SRC
+
+- apiserver
+#+BEGIN_SRC shell
+vim /etc/kubernetes/apiserver
+-------------------------------------------------------------------------------
+KUBE_API_ADDRESS="--insecure-bind-address=0.0.0.0"
+KUBE_API_PORT="--insecure-port=8080"
+KUBE_ETCD_SERVERS="--etcd-servers=http://10.10.112.61:2379"
+KUBE_SERVICE_ADDRESSES="--service-cluster-ip-range=10.254.0.0/16"
+KUBE_ADMISSION_CONTROL="--admission-control=NamespaceLifecycle,NamespaceExists"
+#+END_SRC
+
+- 启动服务
+#+BEGIN_SRC shell
+for SERVICES in etcd kube-apiserver kube-controller-manager kube-scheduler; do
+systemctl restart $SERVICES
+systemctl enable $SERVICES
+systemctl status $SERVICES
+done
+#+END_SRC
+
+** node1 配置
+#+BEGIN_SRC shell
+yum -y install docker-1.10* flannel bridge-utils kubernetes device-mapper-event-libs device-mapper-libs net-tools bridge-utils vim unzip lrzs
+#+END_SRC
+- kubelet
+#+BEGIN_SRC shell
+vim /etc/kubernetes/kubelet
+------------------------------------------------------------------------------
+KUBELET_ADDRESS="--address=10.10.112.217"
+KUBELET_HOSTNAME="--hostname-override=node1.com"   #这点些什么 master get nodes 时  显示什么
+KUBELET_API_SERVER="--api-servers=http://10.10.112.61:8080"
+KUBELET_ARGS=""
+#+END_SRC
+- config
+#+BEGIN_SRC shell
+vim /etc/kubernetes/config
+------------------------------------------------------------------------------
+KUBE_LOGTOSTDERR="--logtostderr=true"
+# journal message level, 0 is debug
+KUBE_LOG_LEVEL="--v=1"
+# Should this cluster be allowed to run privileged docker containers
+KUBE_ALLOW_PRIV="--allow-privileged=false"
+# How the controller-manager, scheduler, and proxy find the apiserver
+KUBE_MASTER="--master=http://10.10.112.61:8080"
+#+END_SRC
+- 配置flannel服务
+#+BEGIN_SRC shell
+vim /etc/sysconfig/flanneld
+-----------------------------------------
+FLANNEL_ETCD="http://10.10.112.61:2379"
+FLANNEL_ETCD_KEY="/atomic.io/network"
+#+END_SRC
+
+- 启动node1 节点
+#+BEGIN_SRC shell
+for SERVICES in kube-proxy kubelet flanneld; do
+systemctl restart $SERVICES
+systemctl enable $SERVICES
+systemctl status $SERVICES
+done
+#+END_SRC
+
+
+** node2 配置
+#+BEGIN_SRC shell
+yum -y install docker-1.10* flannel bridge-utils kubernetes device-mapper-event-libs device-mapper-libs net-tools bridge-utils vim unzip lrzs
+#+END_SRC
+- kubelet
+#+BEGIN_SRC shell
+vim /etc/kubernetes/kubelet
+------------------------------------------------------------------------------
+KUBELET_ADDRESS="--address=10.10.112.139"
+KUBELET_HOSTNAME="--hostname-override=node2.com"   #这点些什么 master get nodes 时  显示什么
+KUBELET_API_SERVER="--api-servers=http://10.10.112.61:8080"
+KUBELET_ARGS=""
+#+END_SRC
+- config
+#+BEGIN_SRC shell
+vim /etc/kubernetes/config
+------------------------------------------------------------------------------
+KUBE_LOGTOSTDERR="--logtostderr=true"
+# journal message level, 0 is debug
+KUBE_LOG_LEVEL="--v=1"
+# Should this cluster be allowed to run privileged docker containers
+KUBE_ALLOW_PRIV="--allow-privileged=false"
+# How the controller-manager, scheduler, and proxy find the apiserver
+KUBE_MASTER="--master=http://10.10.112.61:8080"
+#+END_SRC
+- 配置flannel服务
+#+BEGIN_SRC shell
+vim /etc/sysconfig/flanneld
+-----------------------------------------
+FLANNEL_ETCD="http://10.10.112.61:2379"
+FLANNEL_ETCD_KEY="/atomic.io/network"
+#+END_SRC
+
+- 启动node2 节点
+#+BEGIN_SRC shell
+for SERVICES in kube-proxy kubelet flanneld; do
+systemctl restart $SERVICES
+systemctl enable $SERVICES
+systemctl status $SERVICES
+done
+#+END_SRC
+** Master 执行命令
+#+BEGIN_SRC shell
+[root@node-10-10-112-61 kubernetes]# kubectl get nodes
+NAME        STATUS    AGE
+node1.com   Ready     13d
+node2.com   Ready     14d
+#+END_SRC
