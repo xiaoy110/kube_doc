@@ -38,7 +38,7 @@ yum -y install kubernetes device-mapper-event-libs device-mapper-libs net-tools 
 - Etcd配置
 #+BEGIN_SRC shell
 # vim /etc/etcd/etcd.conf
-----------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 # [member]
 ETCD_NAME=default
 ETCD_DATA_DIR="/var/lib/etcd/default.etcd"
@@ -64,7 +64,7 @@ KUBE_ADMISSION_CONTROL="--admission-control=NamespaceLifecycle,NamespaceExists"
 - controller-manager
 #+BEGIN_SRC 
 vim /etc/kubernetes/controller-manager
------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 KUBE_CONTROLLER_MANAGER_ARGS="node1.com,node2.com" #貌似配置不配置都行，因为写错了没事。
 #+END_SRC
 
@@ -87,7 +87,7 @@ yum -y install docker-1.10* flannel bridge-utils kubernetes device-mapper-event-
 vim /etc/kubernetes/kubelet
 ------------------------------------------------------------------------------
 KUBELET_ADDRESS="--address=10.10.112.217"
-KUBELET_HOSTNAME="--hostname-override=node1.com"   #这点写什么 master get nodes 时  显示什么
+KUBELET_HOSTNAME="--hostname-override=node1.com"   #这点写什么 master get nodes 时  name那一列显示什么
 KUBELET_API_SERVER="--api-servers=http://10.10.112.61:8080"
 KUBELET_ARGS=""
 #+END_SRC
@@ -130,7 +130,7 @@ yum -y install docker-1.10* flannel bridge-utils kubernetes device-mapper-event-
 vim /etc/kubernetes/kubelet
 ------------------------------------------------------------------------------
 KUBELET_ADDRESS="--address=10.10.112.139"
-KUBELET_HOSTNAME="--hostname-override=node2.com"   #这点写什么 master get nodes 时  显示什么
+KUBELET_HOSTNAME="--hostname-override=node2.com"   #这点写什么 master get nodes 时  name那一列显示什么
 KUBELET_API_SERVER="--api-servers=http://10.10.112.61:8080"
 KUBELET_ARGS=""
 #+END_SRC
