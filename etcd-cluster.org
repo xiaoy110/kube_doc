@@ -1,0 +1,95 @@
+* install etcd
+| hostname |    ip address |
+|----------+---------------|
+| etcd1   | 10.10.107.101 |
+| etcd2   | 10.10.107.102 |
+| etcd3   | 10.10.107.103 |
+
+
+
+#+BEGIN_SRC shell
+yum install etcd
+
+#+END_SRC
+** etcd-1 configure
+#+BEGIN_EXAMPLE configure
+[root@localhost tmp]# more /etc/etcd/etcd.conf 
+ETCD_NAME=etcd1
+ETCD_DATA_DIR="/var/lib/etcd/etcd0.etcd"
+ETCD_LISTEN_PEER_URLS="http://10.10.107.101:2380"
+ETCD_LISTEN_CLIENT_URLS="http://0.0.0.0:2379"
+ETCD_INITIAL_ADVERTISE_PEER_URLS="http://10.10.107.101:2380"
+ETCD_INITIAL_CLUSTER="etcd1=http://10.10.107.101:2380,etcd2=http://10.10.107.102:2380,etcd3=http://10.10.107.103:2380"
+ETCD_INITIAL_CLUSTER_STATE="new"
+ETCD_INITIAL_CLUSTER_TOKEN="etcd-cluster-1"
+ETCD_ADVERTISE_CLIENT_URLS="http://localhost:2379,http://10.10.107.101:2379"
+#+END_EXAMPLE
+** etcd-2 configure
+#+BEGIN_SRC configure
+ETCD_NAME=etcd2
+ETCD_DATA_DIR="/var/lib/etcd/etcd0.etcd"
+ETCD_LISTEN_PEER_URLS="http://10.10.107.102:2380"
+ETCD_LISTEN_CLIENT_URLS="http://0.0.0.0:2379"
+ETCD_INITIAL_ADVERTISE_PEER_URLS="http://10.10.107.102:2380"
+ETCD_INITIAL_CLUSTER="etcd1=http://10.10.107.101:2380,etcd2=http://10.10.107.102:2380,etcd3=http://10.10.107.103:2380"
+ETCD_INITIAL_CLUSTER_STATE="new"
+ETCD_INITIAL_CLUSTER_TOKEN="etcd-cluster-1"
+ETCD_ADVERTISE_CLIENT_URLS="http://localhost:2379,http://10.10.107.102:2379"
+#+END_SRC
+** etcd3 configure
+#+BEGIN_SRC configure
+ETCD_NAME=etcd3
+ETCD_DATA_DIR="/var/lib/etcd/etcd0.etcd"
+ETCD_LISTEN_PEER_URLS="http://10.10.107.103:2380"
+ETCD_LISTEN_CLIENT_URLS="http://0.0.0.0:2379"
+ETCD_INITIAL_ADVERTISE_PEER_URLS="http://10.10.107.103:2380"
+ETCD_INITIAL_CLUSTER="etcd1=http://10.10.107.101:2380,etcd2=http://10.10.107.102:2380,etcd3=http://10.10.107.103:2380"
+ETCD_INITIAL_CLUSTER_STATE="new"
+ETCD_INITIAL_CLUSTER_TOKEN="etcd-cluster-1"
+ETCD_ADVERTISE_CLIENT_URLS="http://localhost:2379,http://10.10.107.103:2379"
+
+#+END_SRC
+
+
+** change /usr/lib/systemd/system/etcd.service file
+#+BEGIN_SRC shell
+[Unit]
+Description=Etcd Server
+After=network.target
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=notify
+WorkingDirectory=/var/lib/etcd/
+EnvironmentFile=-/etc/etcd/etcd.conf
+User=etcd
+# set GOMAXPROCS to number of processors
+ExecStart=/bin/bash -c "GOMAXPROCS=$(nproc) /usr/bin/etcd --name=\"${ETCD_NAME}\" \
+                    --data-dir=\"${ETCD_DATA_DIR}\" \
+                    --listen-client-urls=\"${ETCD_LISTEN_CLIENT_URLS}\" \
+                    --initial-advertise-peer-urls=\"${ETCD_INITIAL_ADVERTISE_PEER_URLS}\" \
+                    --listen-peer-urls=\"${ETCD_LISTEN_PEER_URLS}\" \
+                    --initial-cluster-token=\"${ETCD_INITIAL_CLUSTER_TOKEN}\" \
+                    --advertise-client-urls=\"${ETCD_ADVERTISE_CLIENT_URLS}\" \
+                    --initial-cluster-state=\"${ETCD_INITIAL_CLUSTER_STATE}\" \
+                    --initial-cluster=\"${ETCD_INITIAL_CLUSTER}\""
+Restart=on-failure
+
+
+
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
+
+#+END_SRC
+** check cluster status
+#+BEGIN_SRC shell
+[root@localhost salt]# etcdctl cluster-health
+member 2e3bd09e05198613 is healthy: got healthy result from http://10.10.107.102:2379
+member d2a04978750bf2d8 is healthy: got healthy result from http://10.10.107.104:2379
+member e389ab07e7995076 is healthy: got healthy result from http://10.10.107.103:2379
+cluster is healthy
+
+#+END_SRC
