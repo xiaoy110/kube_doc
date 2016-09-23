@@ -11,7 +11,7 @@
 yum install etcd
 
 #+END_SRC
-** etcd-1 configure
+** etcd1 configure
 #+BEGIN_EXAMPLE configure
 [root@localhost tmp]# more /etc/etcd/etcd.conf 
 ETCD_NAME=etcd1
@@ -24,7 +24,7 @@ ETCD_INITIAL_CLUSTER_STATE="new"
 ETCD_INITIAL_CLUSTER_TOKEN="etcd-cluster-1"
 ETCD_ADVERTISE_CLIENT_URLS="http://localhost:2379,http://10.10.107.101:2379"
 #+END_EXAMPLE
-** etcd-2 configure
+** etcd2 configure
 #+BEGIN_SRC configure
 ETCD_NAME=etcd2
 ETCD_DATA_DIR="/var/lib/etcd/etcd0.etcd"
